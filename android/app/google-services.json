@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "890733066128",
+    "project_id": "abhinayaportfolio",
+    "storage_bucket": "abhinayaportfolio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:890733066128:android:245923eef9b376bbbd6515",
+        "android_client_info": {
+          "package_name": "com.example.abhinaya_portfolio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvbSZjE-V9MkJEeB4UsiilO0V2lm2vkEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
