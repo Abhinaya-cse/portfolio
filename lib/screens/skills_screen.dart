@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 import '../../theme/app_theme.dart';
 import '../../data/portfolio_data.dart';
 import '../../widgets/section_header.dart';
@@ -16,14 +15,38 @@ class _SkillsSectionState extends State<SkillsSection> {
   String _selectedCategory = 'All';
   final _categories = ['All', 'Mobile', 'Backend', 'Web', 'Design', 'Tools'];
 
+  // Icon mapping per category
+  IconData _categoryIcon(String cat) {
+    switch (cat) {
+      case 'Mobile':  return Icons.phone_android_rounded;
+      case 'Backend': return Icons.storage_rounded;
+      case 'Web':     return Icons.language_rounded;
+      case 'Design':  return Icons.palette_rounded;
+      case 'Tools':   return Icons.build_rounded;
+      default:        return Icons.category_rounded;
+    }
+  }
+
+  // Accent color per category
+  Color _categoryColor(String cat) {
+    switch (cat) {
+      case 'Mobile':  return const Color(0xFF6C63FF);
+      case 'Backend': return const Color(0xFF00D4AA);
+      case 'Web':     return const Color(0xFFFF7043);
+      case 'Design':  return const Color(0xFFAB47BC);
+      case 'Tools':   return const Color(0xFF29B6F6);
+      default:        return AppColors.primary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final filtered = _selectedCategory == 'All'
-        ? PortfolioData.skills
-        : PortfolioData.skills
-            .where((s) => s.category == _selectedCategory)
-            .toList();
+
+    // Group skills by category (respect filter)
+    final categoriesToShow = _selectedCategory == 'All'
+        ? ['Mobile', 'Backend', 'Web', 'Design', 'Tools']
+        : [_selectedCategory];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
@@ -50,7 +73,7 @@ class _SkillsSectionState extends State<SkillsSection> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: isActive
                             ? AppColors.primary
@@ -67,15 +90,30 @@ class _SkillsSectionState extends State<SkillsSection> {
                           width: 0.5,
                         ),
                       ),
-                      child: Text(
-                        cat,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: isActive
-                              ? Colors.white
-                              : AppColors.textMuted,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (cat != 'All') ...[
+                            Icon(
+                              _categoryIcon(cat),
+                              size: 13,
+                              color: isActive
+                                  ? Colors.white
+                                  : AppColors.textMuted,
+                            ),
+                            const SizedBox(width: 5),
+                          ],
+                          Text(
+                            cat,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: isActive
+                                  ? Colors.white
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -86,111 +124,57 @@ class _SkillsSectionState extends State<SkillsSection> {
 
           const SizedBox(height: 28),
 
-          // ── Top 3 circular skills (All view only) ───────
-          if (_selectedCategory == 'All') ...[
-            FadeInUp(
-              duration: const Duration(milliseconds: 350),
-              child: Text(
-                'Top Skills',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontSize: 18),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FadeInUp(
-              duration: const Duration(milliseconds: 400),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: PortfolioData.skills
-                    .take(3)
-                    .map((s) => _CircularSkill(skill: s))
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 32),
-            FadeInUp(
-              duration: const Duration(milliseconds: 350),
-              child: Text(
-                'All Skills',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontSize: 18),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+          // ── Skill groups ────────────────────────────────
+          ...categoriesToShow.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final cat = entry.value;
+            final catSkills = PortfolioData.skills
+                .where((s) => s.category == cat)
+                .toList();
+            if (catSkills.isEmpty) return const SizedBox.shrink();
 
-          // ── Skill bars ──────────────────────────────────
-          ...filtered.asMap().entries.map(
-                (e) => FadeInLeft(
-                  duration: const Duration(milliseconds: 350),
-                  delay: Duration(milliseconds: e.key * 40),
-                  child: _SkillBar(skill: e.value),
-                ),
+            return FadeInUp(
+              duration: const Duration(milliseconds: 350),
+              delay: Duration(milliseconds: idx * 80),
+              child: _SkillCategoryCard(
+                category: cat,
+                categoryColor: _categoryColor(cat),
+                categoryIcon: _categoryIcon(cat),
+                skills: catSkills,
+                isDark: isDark,
               ),
+            );
+          }),
         ],
       ),
     );
   }
 }
 
-// ── CIRCULAR SKILL ───────────────────────────────────────────
-class _CircularSkill extends StatelessWidget {
-  final dynamic skill;
-  const _CircularSkill({required this.skill});
+// ── CATEGORY CARD ────────────────────────────────────────────
+class _SkillCategoryCard extends StatelessWidget {
+  final String category;
+  final Color categoryColor;
+  final IconData categoryIcon;
+  final List<dynamic> skills;
+  final bool isDark;
+
+  const _SkillCategoryCard({
+    required this.category,
+    required this.categoryColor,
+    required this.categoryIcon,
+    required this.skills,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CircularPercentIndicator(
-          radius: 48,
-          lineWidth: 7,
-          percent: skill.level,
-          center: Text(
-            '${(skill.level * 100).round()}%',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
-          ),
-          progressColor: AppColors.primary,
-          backgroundColor: AppColors.primary.withOpacity(0.1),
-          animation: true,
-          animationDuration: 900,
-          circularStrokeCap: CircularStrokeCap.round,
-        ),
-        const SizedBox(height: 8),
-        Text(skill.name, style: Theme.of(context).textTheme.labelLarge),
-      ],
-    );
-  }
-}
-
-// ── SKILL BAR ────────────────────────────────────────────────
-class _SkillBar extends StatelessWidget {
-  final dynamic skill;
-  const _SkillBar({required this.skill});
-
-  Color get _barColor {
-    if (skill.level >= 0.85) return AppColors.accent;
-    if (skill.level >= 0.75) return AppColors.primary;
-    return const Color(0xFFFF7043);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           width: 0.5,
@@ -199,44 +183,113 @@ class _SkillBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Category header row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                skill.name,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontSize: 15),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(categoryIcon, size: 16, color: categoryColor),
               ),
+              const SizedBox(width: 10),
               Text(
-                '${(skill.level * 100).round()}%',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: _barColor,
+                category,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${skills.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: categoryColor,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          LinearPercentIndicator(
-            padding: EdgeInsets.zero,
-            lineHeight: 8,
-            percent: skill.level,
-            progressColor: _barColor,
-            backgroundColor: _barColor.withOpacity(0.1),
-            barRadius: const Radius.circular(8),
-            animation: true,
-            animationDuration: 900,
+
+          const SizedBox(height: 14),
+
+          // Skill chips wrap
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: skills
+                .map((s) => _SkillChip(
+                      name: s.name,
+                      accentColor: categoryColor,
+                      isDark: isDark,
+                    ))
+                .toList(),
           ),
-          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+}
+
+// ── SKILL CHIP ───────────────────────────────────────────────
+class _SkillChip extends StatelessWidget {
+  final String name;
+  final Color accentColor;
+  final bool isDark;
+
+  const _SkillChip({
+    required this.name,
+    required this.accentColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: accentColor.withOpacity(0.25),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 7),
           Text(
-            skill.category,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontSize: 11),
+            name,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isDark
+                  ? Colors.white.withOpacity(0.88)
+                  : Colors.black.withOpacity(0.75),
+              letterSpacing: 0.2,
+            ),
           ),
         ],
       ),
