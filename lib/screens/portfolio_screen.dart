@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
-import '../main.dart';
+import 'orb_background.dart';
 import 'about.dart';
 import 'project_screen.dart';
 import 'skills_screen.dart';
@@ -19,21 +20,14 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   final _scrollController = ScrollController();
   int _activeIndex = 0;
   bool _isUserScrolling = false;
+  bool _navScrolled = false;
 
-  // Secret admin tap
   int _secretTapCount = 0;
   DateTime? _lastTapTime;
 
-  // One key per section to detect which is in view
   final List<GlobalKey> _sectionKeys = List.generate(5, (_) => GlobalKey());
 
-  static const _navItems = [
-    _NavMeta(Icons.person_outline_rounded, 'About'),
-    _NavMeta(Icons.grid_view_rounded, 'Projects'),
-    _NavMeta(Icons.bolt_rounded, 'Skills'),
-    _NavMeta(Icons.work_outline_rounded, 'Experience'),
-    _NavMeta(Icons.mail_outline_rounded, 'Contact'),
-  ];
+  static const _navLabels = ['About', 'Projects', 'Skills', 'Exp.', 'Contact'];
 
   @override
   void initState() {
@@ -48,9 +42,11 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     super.dispose();
   }
 
-  // ── Detect which section is in the viewport center ──────────
   void _onScroll() {
-    if (_isUserScrolling) return; // skip during programmatic scroll
+    final scrolled = _scrollController.offset > 60;
+    if (scrolled != _navScrolled) setState(() => _navScrolled = scrolled);
+
+    if (_isUserScrolling) return;
     final screenH = MediaQuery.of(context).size.height;
     for (int i = _sectionKeys.length - 1; i >= 0; i--) {
       final ctx = _sectionKeys[i].currentContext;
@@ -65,7 +61,6 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     }
   }
 
-  // ── Smooth scroll to section ─────────────────────────────────
   Future<void> _scrollToSection(int index) async {
     final ctx = _sectionKeys[index].currentContext;
     if (ctx == null) return;
@@ -75,14 +70,13 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     });
     await Scrollable.ensureVisible(
       ctx,
-      duration: const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOutCubic,
       alignment: 0.0,
     );
     setState(() => _isUserScrolling = false);
   }
 
-  // ── Secret tap handler (5 taps → admin) ──────────────────────
   void _onAvatarTap() {
     final now = DateTime.now();
     if (_lastTapTime == null ||
@@ -100,158 +94,185 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        body: CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── App Bar ────────────────────────────────────
-            SliverAppBar(
-              backgroundColor:
-                  isDark ? AppColors.darkBg : AppColors.lightBg,
-              elevation: 0,
-              floating: true,
-              snap: true,
-              titleSpacing: 20,
-              title: Row(
-                children: [
-                  // Logo dot
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppColors.accent,
-                      shape: BoxShape.circle,
-                    ),
+        backgroundColor: AppColors.void_bg,
+        body: OrbBackground(
+          child: Column(
+            children: [
+              // ── Top Nav ─────────────────────────────────
+              SafeArea(
+                bottom: false,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    _navScrolled ? 12 : 16,
+                    16,
+                    _navScrolled ? 12 : 10,
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'abhinaya.dev',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
+                  decoration: BoxDecoration(
+                    color: _navScrolled
+                        ? const Color(0xD904040A)
+                        : Colors.transparent,
+                    border: _navScrolled
+                        ? const Border(
+                            bottom: BorderSide(color: AppColors.border))
+                        : null,
                   ),
-                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // ── Row 1: Logo ──────────────────────
+                      Row(
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.syne(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
+                              children: [
+                                const TextSpan(
+                                  text: 'abhinaya',
+                                  style: TextStyle(color: AppColors.white),
+                                ),
+                                TextSpan(
+                                  text: '.',
+                                  style: GoogleFonts.syne(
+                                      color: AppColors.violet, fontSize: 16),
+                                ),
+                                const TextSpan(
+                                  text: 'dev',
+                                  style: TextStyle(color: AppColors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // ── Row 2: Pill nav ──────────────────
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.glass,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.glassBorder),
+                        ),
+                        padding: const EdgeInsets.all(3),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(_navLabels.length, (i) {
+                            final isActive = i == _activeIndex;
+                            return GestureDetector(
+                              onTap: () => _scrollToSection(i),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  gradient: isActive
+                                      ? const LinearGradient(
+                                          colors: [
+                                            AppColors.violet,
+                                            AppColors.purple
+                                          ],
+                                        )
+                                      : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  _navLabels[i],
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: isActive
+                                        ? Colors.white
+                                        : AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              actions: [
-                // Theme toggle
-                GestureDetector(
-                  onTap: () => PortfolioApp.of(context)?.toggleTheme(),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkCard
-                          : AppColors.lightCard,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBorder
-                            : AppColors.lightBorder,
-                        width: 0.5,
+
+              // ── Scrollable content ───────────────────────
+              Expanded(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          KeyedSubtree(
+                            key: _sectionKeys[0],
+                            child: AboutSection(onAvatarTap: _onAvatarTap),
+                          ),
+                          const _SectionDivider(),
+                          KeyedSubtree(
+                            key: _sectionKeys[1],
+                            child: const ProjectsSection(),
+                          ),
+                          const _SectionDivider(),
+                          KeyedSubtree(
+                            key: _sectionKeys[2],
+                            child: const SkillsSection(),
+                          ),
+                          const _SectionDivider(),
+                          KeyedSubtree(
+                            key: _sectionKeys[3],
+                            child: const ExperienceSection(),
+                          ),
+                          const _SectionDivider(),
+                          KeyedSubtree(
+                            key: _sectionKeys[4],
+                            child: const ContactSection(),
+                          ),
+                          // Footer
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 28),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ShaderMask(
+                                  shaderCallback: (b) =>
+                                      const LinearGradient(colors: [
+                                    AppColors.violet,
+                                    AppColors.cyan,
+                                  ]).createShader(b),
+                                  child: Text(
+                                    'abhinaya.dev',
+                                    style: GoogleFonts.syne(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                                Text(
+                                  'Designed with ♥ · 2025',
+                                  style: TextStyle(
+                                      fontSize: 11, color: AppColors.faint),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Icon(
-                      isDark
-                          ? Icons.light_mode_outlined
-                          : Icons.dark_mode_outlined,
-                      size: 18,
-                      color: isDark
-                          ? AppColors.textMuted
-                          : const Color(0xFF888899),
-                    ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-
-            // ── All Sections (single continuous scroll) ────
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  // ABOUT
-                  KeyedSubtree(
-                    key: _sectionKeys[0],
-                    child: AboutSection(onAvatarTap: _onAvatarTap),
-                  ),
-                  _Divider(),
-
-                  // PROJECTS
-                  KeyedSubtree(
-                    key: _sectionKeys[1],
-                    child: const ProjectsSection(),
-                  ),
-                  _Divider(),
-
-                  // SKILLS
-                  KeyedSubtree(
-                    key: _sectionKeys[2],
-                    child: const SkillsSection(),
-                  ),
-                  _Divider(),
-
-                  // EXPERIENCE
-                  KeyedSubtree(
-                    key: _sectionKeys[3],
-                    child: const ExperienceSection(),
-                  ),
-                  _Divider(),
-
-                  // CONTACT
-                  KeyedSubtree(
-                    key: _sectionKeys[4],
-                    child: const ContactSection(),
-                  ),
-
-                  // Bottom padding for nav bar
-                  const SizedBox(height: 80),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        // ── Bottom Navigation Bar ───────────────────────────
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: bg,
-            border: Border(top: BorderSide(color: border, width: 0.5)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
               ),
             ],
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(
-                  _navItems.length,
-                  (i) => _NavItem(
-                    icon: _navItems[i].icon,
-                    label: _navItems[i].label,
-                    index: i,
-                    current: _activeIndex,
-                    onTap: _scrollToSection,
-                  ),
-                ),
-              ),
-            ),
           ),
         ),
       ),
@@ -259,82 +280,22 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   }
 }
 
-// ── SECTION DIVIDER ──────────────────────────────────────────
-class _Divider extends StatelessWidget {
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      height: 0.5,
-      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-    );
-  }
-}
-
-// ── NAV META ─────────────────────────────────────────────────
-class _NavMeta {
-  final IconData icon;
-  final String label;
-  const _NavMeta(this.icon, this.label);
-}
-
-// ── NAV ITEM ─────────────────────────────────────────────────
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int index;
-  final int current;
-  final Future<void> Function(int) onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.index,
-    required this.current,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isActive = index == current;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                icon,
-                key: ValueKey(isActive),
-                size: 22,
-                color: isActive ? AppColors.primary : AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight:
-                    isActive ? FontWeight.w600 : FontWeight.w400,
-                color:
-                    isActive ? AppColors.primary : AppColors.textMuted,
-              ),
-            ),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      height: 1,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            AppColors.border,
+            AppColors.border,
+            Colors.transparent,
           ],
+          stops: [0, 0.2, 0.8, 1],
         ),
       ),
     );

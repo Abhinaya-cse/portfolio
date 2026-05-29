@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../theme/app_theme.dart';
-import '../../data/portfolio_data.dart';
-import '../../models/models.dart';
-import '../../widgets/section_header.dart';
-import '../../widgets/chip_tag.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
+import '../widgets/glass_widgets.dart';
+import '../data/portfolio_data.dart';
+import '../models/models.dart';
 
 class ProjectsSection extends StatelessWidget {
   const ProjectsSection({super.key});
@@ -12,65 +12,72 @@ class ProjectsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionHeader(title: 'Projects'),
-          const SizedBox(height: 16),
+          FadeInUp(
+            child: const SectionEyebrow('Featured Work'),
+          ),
+          const SizedBox(height: 8),
+          FadeInUp(
+            delay: const Duration(milliseconds: 60),
+            child: const SectionTitle('Projects'),
+          ),
+          const SizedBox(height: 28),
           ...PortfolioData.projects.asMap().entries.map(
-                (e) => FadeInUp(
-                  duration: const Duration(milliseconds: 350),
-                  delay: Duration(milliseconds: e.key * 50),
-                  child: _ProjectCard(project: e.value, index: e.key),
-                ),
-              ),
+            (e) => FadeInUp(
+              duration: const Duration(milliseconds: 500),
+              delay: Duration(milliseconds: e.key * 80),
+              child: _ProjectCard(project: e.value),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ── PROJECT CARD ──────────────────────────────────────────────
 class _ProjectCard extends StatefulWidget {
   final Project project;
-  final int index;
-  const _ProjectCard({required this.project, required this.index});
+  const _ProjectCard({required this.project});
 
   @override
   State<_ProjectCard> createState() => _ProjectCardState();
 }
 
 class _ProjectCardState extends State<_ProjectCard> {
-  bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final p = widget.project;
+    // Derive secondary color from primary
+    final c2 = Color.lerp(p.color, AppColors.cyan, 0.45) ?? p.color;
 
     return GestureDetector(
       onTap: () => _openDetail(context),
-      onTapDown: (_) => setState(() => _hovered = true),
-      onTapUp: (_) => setState(() => _hovered = false),
-      onTapCancel: () => setState(() => _hovered = false),
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 16),
-        transform: Matrix4.identity()..scale(_hovered ? 0.98 : 1.0),
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 20),
+        transform: Matrix4.identity()..scale(_pressed ? 0.98 : 1.0),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.lightSurface,
-          borderRadius: BorderRadius.circular(20),
+          color: AppColors.glass,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: _hovered
-                ? p.color.withOpacity(0.5)
-                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-            width: _hovered ? 1 : 0.5,
+            color: _pressed
+                ? p.color.withValues(alpha: 0.4)
+                : AppColors.glassBorder,
           ),
-          boxShadow: _hovered
+          boxShadow: _pressed
               ? [
                   BoxShadow(
-                    color: p.color.withOpacity(0.15),
-                    blurRadius: 20,
+                    color: p.color.withValues(alpha: 0.15),
+                    blurRadius: 32,
                     offset: const Offset(0, 8),
                   )
                 ]
@@ -79,83 +86,173 @@ class _ProjectCardState extends State<_ProjectCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Colour accent bar
+            // Gradient accent bar
             Container(
-              height: 5,
+              height: 2,
               decoration: BoxDecoration(
-                color: p.color,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
+                gradient: LinearGradient(colors: [p.color, c2]),
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24)),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Top row: icon + title + arrow
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Project icon tile
                       Container(
-                        width: 46,
-                        height: 46,
+                        width: 52,
+                        height: 52,
                         decoration: BoxDecoration(
-                          color: p.color.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(13),
+                          color: p.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Center(
                           child: Text(
-                            p.title.substring(
-                                0,
-                                p.title.length > 2
-                                    ? 2
-                                    : p.title.length),
-                            style: TextStyle(
-                              color: p.color,
-                              fontSize: 15,
+                            p.title.length >= 2
+                                ? p.title.substring(0, 2)
+                                : p.title,
+                            style: GoogleFonts.syne(
+                              fontSize: 14,
                               fontWeight: FontWeight.w800,
+                              color: p.color.withValues(alpha: 0.9),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               p.title,
-                              style: Theme.of(context).textTheme.titleLarge,
+                              style: GoogleFonts.syne(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                                color: AppColors.white,
+                              ),
                             ),
+                            const SizedBox(height: 3),
                             Text(
                               p.subtitle,
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: AppColors.muted,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: AppColors.textMuted,
+                      // Arrow circle
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.glassBorder),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '↗',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
+
+                  // Description
                   Text(
                     p.description,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    maxLines: 2,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: const Color(0xA6FFFFFF),
+                      height: 1.7,
+                    ),
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 14),
+
+                  // Bullet points
+                  ...p.bullets.take(3).map(
+                    (b) => Padding(
+                      padding: const EdgeInsets.only(bottom: 7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 18,
+                            height: 18,
+                            margin: const EdgeInsets.only(top: 1),
+                            decoration: BoxDecoration(
+                              color: p.color.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '✓',
+                                style: TextStyle(
+                                    fontSize: 9,
+                                    color: p.color
+                                        .withValues(alpha: 0.9),
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              b,
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: const Color(0xA6FFFFFF),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Tech chips
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: p.tech
-                        .take(5)
-                        .map((t) => ChipTag(label: t, color: p.color))
-                        .toList(),
+                    children: p.tech.take(6).map(
+                      (t) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: p.color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: p.color.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Text(
+                          t,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: p.color.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ),
+                    ).toList(),
                   ),
                 ],
               ),
@@ -172,22 +269,20 @@ class _ProjectCardState extends State<_ProjectCard> {
       PageRouteBuilder(
         pageBuilder: (_, __, ___) =>
             ProjectDetailScreen(project: widget.project),
-        transitionsBuilder: (_, animation, __, child) {
-          return SlideTransition(
-            position:
-                Tween(begin: const Offset(1, 0), end: Offset.zero)
-                    .animate(CurvedAnimation(
-                        parent: animation, curve: Curves.easeOutCubic)),
-            child: child,
-          );
-        },
+        transitionsBuilder: (_, animation, __, child) => SlideTransition(
+          position: Tween(
+                  begin: const Offset(1, 0), end: Offset.zero)
+              .animate(CurvedAnimation(
+                  parent: animation, curve: Curves.easeOutCubic)),
+          child: child,
+        ),
         transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
 }
 
-// ── PROJECT DETAIL SCREEN ────────────────────────────────────
+// ── PROJECT DETAIL SCREEN ─────────────────────────────────────
 class ProjectDetailScreen extends StatelessWidget {
   final Project project;
   const ProjectDetailScreen({super.key, required this.project});
@@ -195,35 +290,79 @@ class ProjectDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = project;
+    final c2 = Color.lerp(p.color, AppColors.cyan, 0.45) ?? p.color;
+
     return Scaffold(
+      backgroundColor: AppColors.void_bg,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 180,
+            expandedHeight: 160,
             pinned: true,
-            backgroundColor: p.color,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_rounded,
-                  color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+            backgroundColor: AppColors.void_bg,
+            leading: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.glass,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: const Center(
+                  child: Text(
+                    '←',
+                    style: TextStyle(
+                        color: AppColors.white,
+                        fontSize: 18),
+                  ),
+                ),
+              ),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding:
-                  const EdgeInsets.symmetric(horizontal: 60, vertical: 14),
-              title: Text(
-                p.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20,
-                ),
+              titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+              title: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.title,
+                    style: GoogleFonts.syne(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Text(
+                    p.subtitle,
+                    style: GoogleFonts.outfit(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [p.color, p.color.withOpacity(0.55)],
+                    colors: [
+                      p.color.withValues(alpha: 0.25),
+                      c2.withValues(alpha: 0.1),
+                      AppColors.void_bg,
+                    ],
                     begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: p.color.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -231,70 +370,101 @@ class ProjectDetailScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    p.subtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(color: p.color),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
                     p.description,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      color: const Color(0xA6FFFFFF),
+                      height: 1.75,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Key Features',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontSize: 18),
+                    'KEY FEATURES',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.4,
+                      color: AppColors.violet,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   ...p.bullets.map(
                     (b) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.check_circle_outline_rounded,
-                            size: 18,
-                            color: p.color,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              b,
-                              style: Theme.of(context).textTheme.bodyLarge,
+                          Container(
+                            width: 20,
+                            height: 20,
+                            margin: const EdgeInsets.only(top: 1),
+                            decoration: BoxDecoration(
+                              color: p.color.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
                             ),
+                            child: Center(
+                              child: Text(
+                                '✓',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: p.color,
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(b,
+                                style: GoogleFonts.outfit(
+                                    fontSize: 13.5,
+                                    color: const Color(0xA6FFFFFF),
+                                    height: 1.6)),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Text(
-                    'Tech Stack',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontSize: 18),
+                    'TECH STACK',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.4,
+                      color: AppColors.cyan,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 7,
+                    runSpacing: 7,
                     children: p.tech
-                        .map((t) => ChipTag(label: t, color: p.color))
+                        .map(
+                          (t) => Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: p.color.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: p.color.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Text(t,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: p.color,
+                                    fontWeight: FontWeight.w500)),
+                          ),
+                        )
                         .toList(),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

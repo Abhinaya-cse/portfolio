@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 
@@ -21,33 +22,35 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+      backgroundColor: AppColors.void_bg,
       appBar: AppBar(
-        backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+        backgroundColor: const Color(0xD904040A),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_rounded,
-              color: isDark ? AppColors.textLight : AppColors.textDark,
-              size: 20),
+          icon: const Icon(Icons.arrow_back_ios_rounded,
+              color: AppColors.white, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Messages',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textLight : AppColors.textDark,
-            )),
+        title: Text(
+          'Messages',
+          style: GoogleFonts.syne(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: _markAllRead,
-            child: const Text('Mark all read',
-                style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500)),
+            child: Text(
+              'Mark all read',
+              style: GoogleFonts.outfit(
+                color: AppColors.violet,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -59,14 +62,14 @@ class NotificationsScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: CircularProgressIndicator(color: AppColors.violet),
             );
           }
 
           if (snapshot.hasError) {
             return Center(
               child: Text('Error loading messages',
-                  style: Theme.of(context).textTheme.bodyMedium),
+                  style: GoogleFonts.outfit(color: AppColors.muted)),
             );
           }
 
@@ -78,36 +81,34 @@ class NotificationsScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.inbox_outlined,
-                      size: 64,
-                      color: AppColors.textMuted.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
+                      size: 56,
+                      color: AppColors.muted.withValues(alpha: 0.4)),
+                  const SizedBox(height: 14),
                   Text('No messages yet',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(color: AppColors.textMuted)),
+                      style: GoogleFonts.syne(
+                          color: AppColors.muted,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Text('Contact form submissions will appear here',
-                      style: Theme.of(context).textTheme.bodyMedium),
+                      style: GoogleFonts.outfit(
+                          color: AppColors.muted, fontSize: 12)),
                 ],
               ),
             );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             itemCount: docs.length,
             itemBuilder: (context, i) {
-              final doc  = docs[i];
+              final doc = docs[i];
               final data = doc.data() as Map<String, dynamic>;
               return FadeInUp(
                 duration: const Duration(milliseconds: 300),
                 delay: Duration(milliseconds: i * 40),
                 child: _MessageCard(
-                  docId  : doc.id,
-                  data   : data,
-                  isDark : isDark,
-                ),
+                    docId: doc.id, data: data),
               );
             },
           );
@@ -117,16 +118,10 @@ class NotificationsScreen extends StatelessWidget {
   }
 }
 
-// ── MESSAGE CARD ──────────────────────────────────────────────
 class _MessageCard extends StatelessWidget {
   final String docId;
   final Map<String, dynamic> data;
-  final bool isDark;
-  const _MessageCard({
-    required this.docId,
-    required this.data,
-    required this.isDark,
-  });
+  const _MessageCard({required this.docId, required this.data});
 
   bool get _isRead => data['read'] == true;
 
@@ -152,17 +147,25 @@ class _MessageCard extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete message?'),
-        content: const Text('This cannot be undone.'),
+        backgroundColor: AppColors.deep_bg,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete message?',
+            style: GoogleFonts.syne(color: AppColors.white)),
+        content: Text('This cannot be undone.',
+            style: GoogleFonts.outfit(color: AppColors.muted)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel',
+                style: GoogleFonts.outfit(color: AppColors.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.red)),
+            child: Text('Delete',
+                style: GoogleFonts.outfit(
+                    color: AppColors.coral,
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -177,8 +180,9 @@ class _MessageCard extends StatelessWidget {
 
   void _reply() async {
     final email = data['email'] ?? '';
-    final name  = data['name'] ?? '';
-    final uri   = Uri.parse('mailto:$email?subject=Re: Your message, $name');
+    final name = data['name'] ?? '';
+    final uri =
+        Uri.parse('mailto:$email?subject=Re: Your message, $name');
     if (await canLaunchUrl(uri)) launchUrl(uri);
   }
 
@@ -189,189 +193,162 @@ class _MessageCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _isRead
-              ? (isDark ? AppColors.darkCard : AppColors.lightCard)
-              : (isDark
-                  ? AppColors.primary.withValues(alpha: 0.08)
-                  : AppColors.primary.withValues(alpha: 0.05)),
+              ? AppColors.glass
+              : AppColors.violet.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isRead
-                ? (isDark ? AppColors.darkBorder : AppColors.lightBorder)
-                : AppColors.primary.withValues(alpha: 0.35),
-            width: _isRead ? 0.5 : 1.0,
+                ? AppColors.glassBorder
+                : AppColors.violet.withValues(alpha: 0.3),
+            width: _isRead ? 1 : 1,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Top row: avatar + name + time + dot ────
-              Row(
-                children: [
-                  // Avatar initials
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        (data['name'] as String? ?? '?')
-                            .substring(0, 1)
-                            .toUpperCase(),
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.violet.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      (data['name'] as String? ?? '?')
+                          .substring(0, 1)
+                          .toUpperCase(),
+                      style: GoogleFonts.syne(
+                        color: AppColors.violet,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          data['name'] ?? 'Unknown',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: isDark
-                                ? AppColors.textLight
-                                : AppColors.textDark,
-                          ),
-                        ),
-                        Text(
-                          data['email'] ?? '',
-                          style: const TextStyle(
-                              color: AppColors.textMuted, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _timeAgo(data['timestamp'] as Timestamp?),
-                        style: const TextStyle(
-                            color: AppColors.textMuted, fontSize: 11),
-                      ),
-                      const SizedBox(height: 4),
-                      if (!_isRead)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
+                        data['name'] ?? 'Unknown',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.white,
                         ),
+                      ),
+                      Text(
+                        data['email'] ?? '',
+                        style: GoogleFonts.outfit(
+                            color: AppColors.muted, fontSize: 11),
+                      ),
                     ],
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // ── Message ──────────────────────────────────
-              Text(
-                data['message'] ?? '',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: isDark
-                      ? AppColors.textLight.withValues(alpha: 0.85)
-                      : AppColors.textDark.withValues(alpha: 0.8),
                 ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // ── Action buttons ───────────────────────────
-              Row(
-                children: [
-                  // Reply
-                  _ActionBtn(
-                    icon: Icons.reply_rounded,
-                    label: 'Reply',
-                    color: AppColors.primary,
-                    onTap: _reply,
-                  ),
-                  const SizedBox(width: 10),
-                  // Mark read (if unread)
-                  if (!_isRead)
-                    _ActionBtn(
-                      icon: Icons.done_all_rounded,
-                      label: 'Mark read',
-                      color: AppColors.accent,
-                      onTap: _markRead,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _timeAgo(data['timestamp'] as Timestamp?),
+                      style: GoogleFonts.outfit(
+                          color: AppColors.muted, fontSize: 10),
                     ),
-                  const Spacer(),
-                  // Delete
-                  GestureDetector(
-                    onTap: () => _delete(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
+                    if (!_isRead) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: AppColors.violet,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                      child: const Icon(Icons.delete_outline_rounded,
-                          color: Colors.red, size: 16),
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              data['message'] ?? '',
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                height: 1.55,
+                color: AppColors.white.withValues(alpha: 0.75),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _ActionBtn(
+                  label: 'Reply',
+                  color: AppColors.violet,
+                  onTap: _reply,
+                ),
+                const SizedBox(width: 8),
+                if (!_isRead)
+                  _ActionBtn(
+                    label: 'Mark read',
+                    color: AppColors.cyan,
+                    onTap: _markRead,
+                  ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => _delete(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.coral.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.coral.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: AppColors.coral, size: 15),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ── ACTION BUTTON ─────────────────────────────────────────────
 class _ActionBtn extends StatelessWidget {
-  final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _ActionBtn(
+      {required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: color)),
-          ],
+        child: Text(
+          label,
+          style: GoogleFonts.outfit(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color),
         ),
       ),
     );
